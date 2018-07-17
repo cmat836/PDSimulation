@@ -68,7 +68,7 @@
             this.Controls.Add(this.daysTextBox);
             this.Controls.Add(this.goButton);
             this.Name = "MainForm";
-            this.Text = "Dank memes";
+            this.Text = "PD Simulation";
             this.ResumeLayout(false);
             this.PerformLayout();
 
