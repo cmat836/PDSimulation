@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PDSimulation
+namespace PDSimulation.src
 {
     class SubSystem
     {

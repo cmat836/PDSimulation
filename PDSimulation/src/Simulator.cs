@@ -4,30 +4,43 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PDSimulation
+namespace PDSimulation.src
 {
     class Simulator
     {
         private List<Actor> actorslist = new List<Actor>();
-        private List<SubSystem> subsystemlist = new List<SubSystem>();
+        private Dictionary<String, SubSystem> subsystemlist = new Dictionary<string, SubSystem>();
+
+        DataReader mainData;
+        DataReader subSystems;
 
         public double daysTaken { get; set; }
 
         public Simulator()
         {
-           
+            mainData = new DataReader("../../data/surveyout.csv");
+            subSystems = new DataReader("../../data/subsystems.csv");
+        }
+
+        public void populate()
+        {
+            while (subSystems.data.ReadNextRecord())
+            {
+                SubSystem sub = new SubSystem(subSystems.data["name"], Convert.ToDouble(subSystems.data["length"]), false, true);
+                subsystemlist.Add(subSystems.data["name"], sub);
+            }
+
+            while (mainData.data.ReadNextRecord())
+            {
+                Actor actor = new Actor(subsystemlist[mainData.data["subsystem"]], Convert.ToDouble(mainData.data["totalmessageresponsetime"]), Convert.ToDouble(mainData.data["centralization"]), Convert.ToDouble(mainData.data["assumptions"]));
+                actorslist.Add(actor);
+            }
+
+            Console.WriteLine(actorslist.Count);
         }
 
         public void simulate()
         {
-            Actor actor1 = new Actor("subA", 0.4, 1, 0.5);
-            actorslist.Add(actor1);
-            Actor actor2 = new Actor("subA", 0.2, 1, 0.3);
-            actorslist.Add(actor2);
-
-            SubSystem task1 = new SubSystem("subA", 90, false, true);
-            subsystemlist.Add(task1);
-
             int days = 0;
 
             //set finished counter
@@ -35,26 +48,26 @@ namespace PDSimulation
             while (finished == false)
             {
                 //for every substystem
-                foreach (SubSystem currentsub in subsystemlist)
+                foreach (KeyValuePair<String, SubSystem> currentsub in subsystemlist)
                 {
                     //if the subsystem can be started
-                    if (currentsub.canStart == true)
+                    if (currentsub.Value.canStart == true)
                     {
                         //if subsystem not blocked
-                        if (currentsub.isBlocked == false)
+                        if (currentsub.Value.isBlocked == false)
                         {
                             //find all avaliable actors for this task
                             foreach (Actor currentactor in actorslist)
                             {
-                                if (currentactor.subSystem == currentsub.name)
+                                if (currentactor.subSystem == currentsub.Value)
                                 {
                                     //check if message generated
                                     bool localmessage = currentactor.generatemessage();
                                     if (localmessage == false)
                                     {
-                                        currentsub.daysTillCompletion--;
+                                        currentsub.Value.daysTillCompletion--;
                                     }
-                                    Console.WriteLine("days till completion = " + currentsub.daysTillCompletion);
+                                    //Console.WriteLine("days till completion = " + currentsub.Value.daysTillCompletion);
                                 }
                             }
                         }
@@ -62,10 +75,10 @@ namespace PDSimulation
                 }
 
                 //check each subsystem to see if work remaining
-                foreach (SubSystem sub2 in subsystemlist)
+                foreach (KeyValuePair<String, SubSystem> sub2 in subsystemlist)
                 {
                     //if works still remaning break out of loop
-                    bool v = sub2.daysTillCompletion >= 0;
+                    bool v = sub2.Value.daysTillCompletion >= 0;
                     if (v)
                     {
                         finished = false;

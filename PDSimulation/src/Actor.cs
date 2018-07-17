@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PDSimulation
+namespace PDSimulation.src
 {
     class Actor
     {
-        public String subSystem { get; set; }
+        public SubSystem subSystem { get; set; }
         public double maxMessages
         {
             get;set;
@@ -37,7 +37,7 @@ namespace PDSimulation
             }
         }
 
-        public Actor(String subSystem, double maxmessage, double centralization, double assumption)
+        public Actor(SubSystem subSystem, double maxmessage, double centralization, double assumption)
         {
             this.subSystem = subSystem;
             maxMessages = maxmessage;

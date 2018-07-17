@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using PDSimulation.src;
 
 namespace PDSimulation
 {
@@ -20,9 +21,10 @@ namespace PDSimulation
         private void goButton_Click(object sender, EventArgs e)
         {
             Simulator simulator = new Simulator();
+            simulator.populate();
             simulator.simulate();
 
-            daysTextBox.Text = simulator.daysTaken.ToString();
+           daysTextBox.Text = simulator.daysTaken.ToString();
         }
     }
 }

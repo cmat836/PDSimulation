@@ -1,0 +1,5 @@
+"Timestamp","subsystem","tasktime","subsystemdependency [sub x ]","subsystemdependency [sub y]","subsystemdependency [sub z]","rework","assumptions","assumptionaccuracy","assumptioneffect","centralization","messagerate [Sub x]","messagerate [Sub y]","messagerate [Sub z]","messageresponsetime","totalmessageresponsetime"
+"2018/07/17 2:43:37 PM GMT+12","sub x","90","0","0.4","0.8","0.2","2","3","4","2","0","0.2","0.2","1","4"
+"2018/07/17 2:44:26 PM GMT+12","sub y","60","0.2","0","0.8","0.8","4","2","3","4","0.2","0","0.2","3","6"
+"2018/07/17 2:46:07 PM GMT+12","subz","120","0.8","0.6","0","0.2","1","4","2","1","0.2","0.2","0","0.5","5"
+"2018/07/17 2:48:35 PM GMT+12","sub x","80","0","0.4","0.4","0.2","2","2","2","2","0","0.2","0.4","1","4"
