@@ -16,7 +16,7 @@ namespace PDSimulation
 
         public double centralization
         {
-            get; set;
+            get; private set;
         }
 
         public double assumption
