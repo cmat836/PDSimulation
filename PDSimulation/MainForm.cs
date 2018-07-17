@@ -10,16 +10,19 @@ using System.Windows.Forms;
 
 namespace PDSimulation
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void goButton_Click(object sender, EventArgs e)
         {
+            Simulator simulator = new Simulator();
+            simulator.simulate();
 
+            daysTextBox.Text = simulator.daysTaken.ToString();
         }
     }
 }
