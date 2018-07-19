@@ -10,6 +10,7 @@ namespace PDSimulation.src
     {
         // List of actors
         private List<Actor> actorslist = new List<Actor>();
+        // List of subsystems
         private Dictionary<String, SubSystem> subsystemlist = new Dictionary<string, SubSystem>();
 
         DataReader mainData;
