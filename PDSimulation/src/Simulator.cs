@@ -72,7 +72,7 @@ namespace PDSimulation.src
                                     {
                                         currentsub.Value.daysTillCompletion--;
                                     }
-                                    //Console.WriteLine("days till completion = " + currentsub.Value.daysTillCompletion);
+                                    Console.WriteLine("days till completion = " + currentsub.Value.daysTillCompletion);
                                 }
                             }
                         }
