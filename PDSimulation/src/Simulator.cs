@@ -8,6 +8,7 @@ namespace PDSimulation.src
 {
     class Simulator
     {
+        // List of actors
         private List<Actor> actorslist = new List<Actor>();
         private Dictionary<String, SubSystem> subsystemlist = new Dictionary<string, SubSystem>();
 
