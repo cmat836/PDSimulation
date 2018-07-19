@@ -26,6 +26,7 @@ namespace PDSimulation.src
             subSystems = new DataReader("../../data/subsystems.csv");
         }
 
+        // Build the data 
         public void populate()
         {
             while (subSystems.data.ReadNextRecord())
