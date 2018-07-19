@@ -15,6 +15,7 @@ namespace PDSimulation.src
 
         // Data from the survey
         DataReader mainData;
+        // Data from the subsystems
         DataReader subSystems;
 
         public double daysTaken { get; set; }
