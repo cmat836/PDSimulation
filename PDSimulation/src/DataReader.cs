@@ -16,5 +16,12 @@ namespace PDSimulation.src
             data = new CsvReader(new StreamReader(fileName), true);
         }
 
+        // Gets the probability (0->1) from a 1-5 scale
+        public static double getProbabilityFromScale(String data, int scaleMin, int scaleMax)
+        {
+            double fieldData = Convert.ToDouble(data);
+            return (fieldData - scaleMin) / (scaleMax - 1);
+        }
+
     }
 }

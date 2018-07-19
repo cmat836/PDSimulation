@@ -26,7 +26,7 @@ namespace PDSimulation.src
         public Simulator()
         {
             mainData = new DataReader("../../data/surveyout.csv");
-            subSystems = new DataReader("../../data/subsystems.csv");
+            subSystems = new DataReader("../../data/subsystemsbasic.csv");
         }
 
         // Build the data 
@@ -40,11 +40,11 @@ namespace PDSimulation.src
 
             while (mainData.data.ReadNextRecord())
             {
-                Actor actor = new Actor(subsystemlist[mainData.data["subsystem"]], Convert.ToDouble(mainData.data["totalmessageresponsetime"]), Convert.ToDouble(mainData.data["centralization"]), Convert.ToDouble(mainData.data["assumptions"]));
+                Actor actor = new Actor(subsystemlist[mainData.data["subsystem"]], Convert.ToDouble(mainData.data["totalmessageresponsetime"]), DataReader.getProbabilityFromScale(mainData.data["centralization"], 1, 5), DataReader.getProbabilityFromScale(mainData.data["assumptions"], 1, 5));
                 actorslist.Add(actor);
             }
 
-            Console.WriteLine(actorslist.Count);
+            Console.WriteLine(actorslist[1].assumption);
         }
 
         public void simulate()
@@ -75,7 +75,7 @@ namespace PDSimulation.src
                                     {
                                         currentsub.Value.daysTillCompletion--;
                                     }
-                                    Console.WriteLine("days till completion = " + currentsub.Value.daysTillCompletion);
+                                    //Console.WriteLine("days till completion = " + currentsub.Value.daysTillCompletion);
                                 }
                             }
                         }

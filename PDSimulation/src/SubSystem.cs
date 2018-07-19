@@ -8,6 +8,8 @@ namespace PDSimulation.src
 {
     class SubSystem
     {
+        // Stores the dependency this subsystem has on other subsystems
+        public Dictionary<SubSystem, double> subSystemDependencies = new Dictionary<SubSystem, double>();
         public string name { get; set; }
         public double daysTillCompletion { get; set; }
         public bool isBlocked { get; set; }
@@ -21,6 +23,10 @@ namespace PDSimulation.src
             this.canStart = canStart;
         }
 
- 
+        // Gets the dependency THIS subsystem has on the passed subsystem
+        public double getDependencyOnSubSystem(SubSystem sub)
+        {
+            return subSystemDependencies[sub];
+        }
     }
 }
