@@ -13,6 +13,7 @@ namespace PDSimulation.src
         // List of subsystems
         private Dictionary<String, SubSystem> subsystemlist = new Dictionary<string, SubSystem>();
 
+        // Data from the survey
         DataReader mainData;
         DataReader subSystems;
 
