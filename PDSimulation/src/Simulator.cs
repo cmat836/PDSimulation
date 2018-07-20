@@ -12,9 +12,9 @@ namespace PDSimulation.src
     class Simulator
     {
         // List of actors
-        private List<Actor> actorslist = new List<Actor>();
+        private List<Actor> actorsList = new List<Actor>();
         // List of subsystems
-        private Dictionary<String, SubSystem> subsystemlist = new Dictionary<string, SubSystem>();
+        private Dictionary<String, SubSystem> subSystemList = new Dictionary<string, SubSystem>();
 
         // Data from the survey
         DataReader mainData;
@@ -26,7 +26,7 @@ namespace PDSimulation.src
         public Simulator()
         {
             mainData = new DataReader("../../data/surveyout.csv");
-            subSystems = new DataReader("../../data/subsystemsbasic.csv");
+            subSystems = new DataReader("../../data/subsystems.csv");
         }
 
         // Build the data 
@@ -35,16 +35,36 @@ namespace PDSimulation.src
             while (subSystems.data.ReadNextRecord())
             {
                 SubSystem sub = new SubSystem(subSystems.data["name"], Convert.ToDouble(subSystems.data["length"]), false, true);
-                subsystemlist.Add(subSystems.data["name"], sub);
+                subSystemList.Add(subSystems.data["name"], sub);
             }
 
             while (mainData.data.ReadNextRecord())
             {
-                Actor actor = new Actor(subsystemlist[mainData.data["subsystem"]], Convert.ToDouble(mainData.data["totalmessageresponsetime"]), DataReader.getProbabilityFromScale(mainData.data["centralization"], 1, 5), DataReader.getProbabilityFromScale(mainData.data["assumptions"], 1, 5));
-                actorslist.Add(actor);
+                Actor actor = new Actor(subSystemList[mainData.data["subsystem"]], Convert.ToDouble(mainData.data["totalmessageresponsetime"]), DataReader.getProbabilityFromScale(mainData.data["centralization"], 1, 5), DataReader.getProbabilityFromScale(mainData.data["assumptions"], 1, 5));
+                actorsList.Add(actor);
+
+                // Go through all the subsystems
+                foreach (KeyValuePair<String, SubSystem> kvp in subSystemList)
+                {
+                    SubSystem subOther = kvp.Value;
+                    // Get the subSystem the actor is assigned to
+                    SubSystem subActor = subSystemList[mainData.data["subsystem"]];
+                    // Get the dependency the actors subSystem has on the other subSystem
+                    double dependency = Convert.ToDouble(mainData.data["subsystemdependency [" + subOther.name + "]"]);
+                    // Store it
+                    //if (subOther != subActor)
+                    //{
+                        subSystemList[mainData.data["subsystem"]].subSystemDependencies.Add(kvp.Value, dependency);
+                    //}
+                }
             }
 
-            Console.WriteLine(actorslist[1].assumption);
+            //Console.WriteLine("Sub x depend");
+            //foreach (KeyValuePair<SubSystem, double> kvp in subSystemList["sub x"].subSystemDependencies)
+            //{
+            //    Console.WriteLine(kvp.Value);
+            //}    
+            Console.WriteLine(subSystemList["sub x"].subSystemDependencies.Count);
         }
 
         public void simulate()
@@ -56,7 +76,7 @@ namespace PDSimulation.src
             while (finished == false)
             {
                 //for every substystem
-                foreach (KeyValuePair<String, SubSystem> currentsub in subsystemlist)
+                foreach (KeyValuePair<String, SubSystem> currentsub in subSystemList)
                 {
                     //if the subsystem can be started
                     if (currentsub.Value.canStart == true)
@@ -65,7 +85,7 @@ namespace PDSimulation.src
                         if (currentsub.Value.isBlocked == false)
                         {
                             //find all avaliable actors for this task
-                            foreach (Actor currentactor in actorslist)
+                            foreach (Actor currentactor in actorsList)
                             {
                                 if (currentactor.subSystem == currentsub.Value)
                                 {
@@ -83,7 +103,7 @@ namespace PDSimulation.src
                 }
 
                 //check each subsystem to see if work remaining
-                foreach (KeyValuePair<String, SubSystem> sub2 in subsystemlist)
+                foreach (KeyValuePair<String, SubSystem> sub2 in subSystemList)
                 {
                     //if works still remaning break out of loop
                     bool v = sub2.Value.daysTillCompletion >= 0;
