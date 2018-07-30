@@ -22,7 +22,7 @@ namespace PDSimulation
         {
             Simulator simulator = new Simulator();
             simulator.populate();
-            simulator.simulate();
+            simulator.simulateOld();
 
            daysTextBox.Text = simulator.daysTaken.ToString();
         }

@@ -8,8 +8,21 @@ namespace PDSimulation.src
 {
     class Actor
     {
+        // Messages that have been sent from this actor and are pending reply
+        public List<Message> outbox = new List<Message>();
+        // Messages sent to this actor that are pending reply
+        public List<Message> inbox = new List<Message>();
+
+        public double maxHoursWorkedPerDay = 8;
+        public double workingHoursLeftInDay;
+
+        // Time taken to respond to a message
+        public double messageResponseTime;
+
         public SubSystem subSystem { get; set; }
-        public double maxMessages
+
+        // Total time every day allocated to responding to messages
+        public double totalMessageResponseTime
         {
             get;set;
         }
@@ -37,12 +50,13 @@ namespace PDSimulation.src
             }
         }
 
-        public Actor(SubSystem subSystem, double maxmessage, double centralization, double assumption)
+        public Actor(SubSystem subSystem, double totalmessagetime, double centralization, double assumption, double messageResponseTime)
         {
             this.subSystem = subSystem;
-            maxMessages = maxmessage;
+            this.totalMessageResponseTime = totalmessagetime;
             this.centralization = centralization;
             this.assumption = assumption;
+            this.messageResponseTime = messageResponseTime;
         }
     }
 }

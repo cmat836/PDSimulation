@@ -59,6 +59,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\DataReader.cs" />
+    <Compile Include="src\Message.cs" />
     <Compile Include="src\Simulator.cs" />
     <Compile Include="src\SubSystem.cs" />
     <EmbeddedResource Include="MainForm.resx">

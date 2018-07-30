@@ -23,10 +23,13 @@ namespace PDSimulation.src
 
         public double daysTaken { get; set; }
 
+        public double dependencyThreshold = 0.4;
+
         public Simulator()
         {
             mainData = new DataReader("../../data/surveyout.csv");
             subSystems = new DataReader("../../data/subsystems.csv");
+            daysTaken = 0;
         }
 
         // Build the data 
@@ -40,7 +43,13 @@ namespace PDSimulation.src
 
             while (mainData.data.ReadNextRecord())
             {
-                Actor actor = new Actor(subSystemList[mainData.data["subsystem"]], Convert.ToDouble(mainData.data["totalmessageresponsetime"]), DataReader.getProbabilityFromScale(mainData.data["centralization"], 1, 5), DataReader.getProbabilityFromScale(mainData.data["assumptions"], 1, 5));
+                SubSystem sub = subSystemList[mainData.data["subsystem"]];
+                double totalmessagetime = Convert.ToDouble(mainData.data["totalmessageresponsetime"];
+                double centralization = DataReader.getProbabilityFromScale(mainData.data["centralization"], 1, 5);
+                double assumptions = DataReader.getProbabilityFromScale(mainData.data["assumptions"], 1, 5);
+                double messageresponsetime = Convert.ToDouble(mainData.data["messageresponsetime"]);
+
+                Actor actor = new Actor(sub, totalmessagetime, centralization, assumptions, messageresponsetime);
                 actorsList.Add(actor);
 
                 // Go through all the subsystems
@@ -67,7 +76,7 @@ namespace PDSimulation.src
             Console.WriteLine(subSystemList["sub x"].subSystemDependencies.Count);
         }
 
-        public void simulate()
+        public void simulateOld()
         {
             int days = 0;
 
@@ -125,6 +134,85 @@ namespace PDSimulation.src
             }
 
             daysTaken = days;
+        }
+
+        public void simulate()
+        {
+            bool finished = false;
+            while (!finished)
+            {
+                daysTaken++;
+
+                // MESSAGE SECTION
+
+                // Go through all the actors
+                foreach (Actor actor in actorsList)
+                {
+                    double messageTimeLeft = actor.totalMessageResponseTime;
+                    foreach (Message message in actor.inbox)
+                    {
+                        // If enough time left, respond to message and subtract time
+                        if (actor.messageResponseTime > messageTimeLeft)
+                        {
+                            message.answered = true;
+                            messageTimeLeft -= actor.messageResponseTime;
+                            actor.workingHoursLeftInDay -= actor.messageResponseTime;
+                        }
+                    }
+                }
+
+                // SUBSYSTEMS
+
+                bool everythingIsDone = true;
+
+                // Go through all the subsystems
+                foreach (KeyValuePair<String, SubSystem> subsystem in subSystemList)
+                {
+                    // Go through all of the dependencies of the subsystem
+                    foreach (KeyValuePair<SubSystem, double> dependency in subsystem.Value.subSystemDependencies) {
+                        // If the dependency is required AND it has not been completed, block the subsystem
+                        if (dependency.Value > dependencyThreshold && dependency.Key.hoursTillCompletion <= 0) 
+                        {
+                            subsystem.Value.isBlocked = true;
+                        }
+                    }
+
+                    // If blocked, continue to the next subsystem
+                    if (subsystem.Value.isBlocked)
+                    {
+                        continue;
+                    }
+
+                    // Go through actors
+                    foreach (Actor actor in actorsList)
+                    {
+                        // If actor can work on the subsystem, work on it
+                        if (actor.subSystem == subsystem.Value)
+                        {
+                            subsystem.Value.hoursTillCompletion -= actor.workingHoursLeftInDay;
+                            actor.workingHoursLeftInDay = 0;
+                        }
+                    }
+
+                    // If time still left, we're obviously not done
+                    if (subsystem.Value.hoursTillCompletion > 0)
+                    {
+                        everythingIsDone = false;
+                    }
+                }
+
+                // CHECK IF WE'RE DONE
+
+                if (everythingIsDone)
+                {
+                    finished = true;
+                    break;
+                }
+
+                // ASSUMPTIONS
+
+                
+                
         }
     }
 }
