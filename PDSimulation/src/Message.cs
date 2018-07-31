@@ -9,17 +9,20 @@ namespace PDSimulation.src
     class Message
     {
         public Actor sender;
-        public Actor recipient;
+        public SubSystem recipient;
 
         public int daysSinceSent;
         public bool answered;
 
-        public Message(Actor sender, Actor recipient)
+        public bool answerAssumed;
+
+        public Message(Actor sender, SubSystem recipient)
         {
             this.sender = sender;
             this.recipient = recipient;
             daysSinceSent = 0;
             answered = false;
+            answerAssumed = false;
         }
 
 

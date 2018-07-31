@@ -44,12 +44,14 @@ namespace PDSimulation.src
             while (mainData.data.ReadNextRecord())
             {
                 SubSystem sub = subSystemList[mainData.data["subsystem"]];
-                double totalmessagetime = Convert.ToDouble(mainData.data["totalmessageresponsetime"];
+                double totalmessagetime = Convert.ToDouble(mainData.data["totalmessageresponsetime"]);
                 double centralization = DataReader.getProbabilityFromScale(mainData.data["centralization"], 1, 5);
                 double assumptions = DataReader.getProbabilityFromScale(mainData.data["assumptions"], 1, 5);
                 double messageresponsetime = Convert.ToDouble(mainData.data["messageresponsetime"]);
+                double assumptionaccuracy = DataReader.getProbabilityFromScale(mainData.data["assumptionaccuracy"], 1, 5);
+                double assumptioneffect = DataReader.getProbabilityFromScale(mainData.data["assumptioneffect"], 1, 5);
 
-                Actor actor = new Actor(sub, totalmessagetime, centralization, assumptions, messageresponsetime);
+                Actor actor = new Actor(sub, totalmessagetime, centralization, assumptions, messageresponsetime, assumptionaccuracy, assumptioneffect);
                 actorsList.Add(actor);
 
                 // Go through all the subsystems
@@ -76,66 +78,6 @@ namespace PDSimulation.src
             Console.WriteLine(subSystemList["sub x"].subSystemDependencies.Count);
         }
 
-        public void simulateOld()
-        {
-            int days = 0;
-
-            //set finished counter
-            bool finished = false;
-            while (finished == false)
-            {
-                //for every substystem
-                foreach (KeyValuePair<String, SubSystem> currentsub in subSystemList)
-                {
-                    //if the subsystem can be started
-                    if (currentsub.Value.canStart == true)
-                    {
-                        //if subsystem not blocked
-                        if (currentsub.Value.isBlocked == false)
-                        {
-                            //find all avaliable actors for this task
-                            foreach (Actor currentactor in actorsList)
-                            {
-                                if (currentactor.subSystem == currentsub.Value)
-                                {
-                                    //check if message generated
-                                    bool localmessage = currentactor.generatemessage();
-                                    if (localmessage == false)
-                                    {
-                                        currentsub.Value.daysTillCompletion--;
-                                    }
-                                    //Console.WriteLine("days till completion = " + currentsub.Value.daysTillCompletion);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                //check each subsystem to see if work remaining
-                foreach (KeyValuePair<String, SubSystem> sub2 in subSystemList)
-                {
-                    //if works still remaning break out of loop
-                    bool v = sub2.Value.daysTillCompletion >= 0;
-                    if (v)
-                    {
-                        finished = false;
-                        break;
-                    }
-
-                    finished = true;
-                }
-                if (days > 10000)
-                {
-                    finished = true;
-                }
-
-                //finished day
-                days++;
-            }
-
-            daysTaken = days;
-        }
-
         public void simulate()
         {
             bool finished = false;
@@ -148,8 +90,10 @@ namespace PDSimulation.src
                 // Go through all the actors
                 foreach (Actor actor in actorsList)
                 {
+                    bool unansweredMessages = false;
+
                     double messageTimeLeft = actor.totalMessageResponseTime;
-                    foreach (Message message in actor.inbox)
+                    foreach (Message message in actor.subSystem.inbox)
                     {
                         // If enough time left, respond to message and subtract time
                         if (actor.messageResponseTime > messageTimeLeft)
@@ -158,6 +102,17 @@ namespace PDSimulation.src
                             messageTimeLeft -= actor.messageResponseTime;
                             actor.workingHoursLeftInDay -= actor.messageResponseTime;
                         }
+
+                        if (!(message.answered || message.answerAssumed))
+                        {
+                            unansweredMessages = true;
+                        }
+                    }
+
+                    // If there are no pending messages for the actor's subsystem, unblock it
+                    if (!unansweredMessages)
+                    {
+                        actor.subSystem.isBlocked = false;
                     }
                 }
 
@@ -169,9 +124,10 @@ namespace PDSimulation.src
                 foreach (KeyValuePair<String, SubSystem> subsystem in subSystemList)
                 {
                     // Go through all of the dependencies of the subsystem
-                    foreach (KeyValuePair<SubSystem, double> dependency in subsystem.Value.subSystemDependencies) {
+                    foreach (KeyValuePair<SubSystem, double> dependency in subsystem.Value.subSystemDependencies)
+                    {
                         // If the dependency is required AND it has not been completed, block the subsystem
-                        if (dependency.Value > dependencyThreshold && dependency.Key.hoursTillCompletion <= 0) 
+                        if (dependency.Value > dependencyThreshold && dependency.Key.hoursTillCompletion <= 0)
                         {
                             subsystem.Value.isBlocked = true;
                         }
@@ -209,10 +165,92 @@ namespace PDSimulation.src
                     break;
                 }
 
+                // SENDING MESSAGES
+
+                // Go through all the actors 
+                foreach (Actor actor in actorsList)
+                {
+                    // Go through his subsystems dependency's
+                    foreach (KeyValuePair<SubSystem, double> kvp in actor.subSystem.subSystemDependencies)
+                    {
+                        // Chance to generate a message, calculated by weighting the dependency of the actors subsystem on the other subsystem  by the percentage of time left in the task
+                        // I.e. if there is alot of time left in the task the chance for a message to occur will be higher (closer to the DSM) than if there is little time left
+                        double messagechance = kvp.Value * (actor.subSystem.hoursTillCompletion / actor.subSystem.totalTimeNeeded);
+                        if (doesEventOccur(messagechance))
+                        {
+                            // if a message is sent, add it to the actor who sent it and the subsystem that will receive it, and block the subsystem that sent the message
+                            Message m = new Message(actor, kvp.Key);
+                            actor.outbox.Add(m);
+                            kvp.Key.inbox.Add(m);
+                            actor.subSystem.isBlocked = true;
+                        }
+                    }
+                }
+
                 // ASSUMPTIONS
 
-                
-                
+                // Go through all the actors 
+                foreach (Actor actor in actorsList)
+                {
+                    // If the actors subsystem is blocked
+                    if(actor.subSystem.isBlocked)
+                    {
+                        foreach (Message m in actor.subSystem.inbox)
+                        {
+                            // Check if the actor makes an assumption
+                            if (doesEventOccur(actor.assumptionChance))
+                            {
+                                m.answerAssumed = true;
+                            }
+                        }
+                    }
+                }
+
+                // Loop through all the messages in the system
+                foreach (Actor actor in actorsList)
+                {
+                    foreach (Message m in actor.outbox)
+                    {
+                        if (m.answered)
+                        {
+                            // If the message had an answer assumed, and then has been answered properly
+                            if (m.answerAssumed)
+                            {
+                                // Check if the assumption was not correct
+                                if (doesEventOccur(m.sender.assumptionAccuracy))
+                                {
+                                    // Add more time the the subsystem based on how much of an effect bad assumptions have
+                                    double addedTime = m.sender.assumptionEffect * m.daysSinceSent;
+                                    m.sender.subSystem.hoursTillCompletion += addedTime;
+
+///////////////////////////////////////////////////////////////////////////////////  CASCADING REWORK GOES HERE ////////////////////////////////////////////////////////////////////////////////
+                                }
+                            }
+
+                            // Delete the message
+                            m.sender.outbox.Remove(m);
+                            m.recipient.inbox.Remove(m);
+                        }
+
+                        // increment the number of days the message has been out for
+                        m.daysSinceSent++;
+                    }
+                }
+            }
+        }
+
+        // returns true if the event occurs (0->1 probability)
+        public bool doesEventOccur(double chance)
+        {
+            Random r = new Random();
+            return (r.NextDouble() < chance);
+        }
+
+        public bool doesEventOccur(double chance, double weighting)
+        {
+            Random r = new Random();
+            return ((r.NextDouble() * weighting) < chance);
         }
     }
-}
+
+    }
