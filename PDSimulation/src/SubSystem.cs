@@ -19,21 +19,42 @@ namespace PDSimulation.src
         // Total time needed to complete the tast
         public double totalTimeNeeded { get; set; }
         public bool isBlocked { get; set; }
-        public bool canStart { get; set; }
 
-        public SubSystem(String name, double completionTime, bool isBlocked, bool canStart)
+        public SubSystem(String name, bool isBlocked)
         {
             this.name = name;
-            this.hoursTillCompletion = completionTime;
-            this.totalTimeNeeded = completionTime;
             this.isBlocked = isBlocked;
-            this.canStart = canStart;
+        }
+
+        public void setTime(double timeToComplete)
+        {
+            hoursTillCompletion = timeToComplete;
+            totalTimeNeeded = timeToComplete;
         }
 
         // Gets the dependency THIS subsystem has on the passed subsystem
         public double getDependencyOnSubSystem(SubSystem sub)
         {
             return subSystemDependencies[sub];
+        }
+
+        // Check if the subsystem has no pending messages, and update whether or not it can be worked on
+        public void checkStatus()
+        {
+            this.isBlocked = false;
+            foreach (Message m in inbox)
+            {
+                if (!m.answerAssumed || !m.answered)
+                {
+                    this.isBlocked = true;
+                    return;
+                }
+            }
+        }
+
+        public double getRandomLength()
+        {
+            return totalTimeNeeded;
         }
     }
 }

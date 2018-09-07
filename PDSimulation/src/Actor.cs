@@ -13,9 +13,10 @@ namespace PDSimulation.src
 
         public double maxHoursWorkedPerDay = 8;
         public double workingHoursLeftInDay;
+        public double timeWorkedThisDay = 0;
 
-        // Time taken to respond to a message
-        public double messageResponseTime;
+        // How fast is the actor at responding to messages
+        public double messageResponseRate;
 
         public SubSystem subSystem { get; set; }
 
@@ -46,15 +47,21 @@ namespace PDSimulation.src
             }
         }
 
-        public Actor(SubSystem subSystem, double totalmessagetime, double centralization, double assumptionchance, double messageResponseTime, double assumptionaccuracy, double assumptioneffect)
+        public Actor(SubSystem subSystem, double totalmessagetime, double centralization, double assumptionchance, double messageResponseRate, double assumptionaccuracy, double assumptioneffect)
         {
             this.subSystem = subSystem;
             this.totalMessageResponseTime = totalmessagetime;
             this.centralization = centralization;
             this.assumptionChance = assumptionchance;
-            this.messageResponseTime = messageResponseTime;
+            this.messageResponseRate = messageResponseRate;
             this.assumptionAccuracy = assumptionaccuracy;
             this.assumptionEffect = assumptioneffect;
+        }
+
+        public void resetDay()
+        {
+            workingHoursLeftInDay = maxHoursWorkedPerDay;
+            timeWorkedThisDay = 0;
         }
     }
 }

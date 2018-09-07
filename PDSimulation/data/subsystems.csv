@@ -1,4 +1,5 @@
-name,length
-sub x,90
-sub y,60
-sub z,120
+name
+locomotion
+SLAM
+firefighting
+high level logic
