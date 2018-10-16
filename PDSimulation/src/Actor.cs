@@ -18,6 +18,8 @@ namespace PDSimulation.src
         // How fast is the actor at responding to messages
         public double messageResponseRate;
 
+        public double experience;
+
         public SubSystem subSystem { get; set; }
 
         // Total time every day allocated to responding to messages
@@ -47,7 +49,7 @@ namespace PDSimulation.src
             }
         }
 
-        public Actor(SubSystem subSystem, double totalmessagetime, double centralization, double assumptionchance, double messageResponseRate, double assumptionaccuracy, double assumptioneffect)
+        public Actor(SubSystem subSystem, double totalmessagetime, double centralization, double assumptionchance, double messageResponseRate, double assumptionaccuracy, double assumptioneffect, double experience)
         {
             this.subSystem = subSystem;
             this.totalMessageResponseTime = totalmessagetime;
@@ -56,6 +58,7 @@ namespace PDSimulation.src
             this.messageResponseRate = messageResponseRate;
             this.assumptionAccuracy = assumptionaccuracy;
             this.assumptionEffect = assumptioneffect;
+            this.experience = experience;
         }
 
         public void resetDay()

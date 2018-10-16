@@ -21,6 +21,8 @@ namespace PDSimulation.src
         // Data from the subsystems
         DataReader subSystems;
 
+        public bool didloadsuccessfully = false;
+
         BetterRandom r;
 
         public bool sequential = false;
@@ -29,12 +31,16 @@ namespace PDSimulation.src
 
         public double dependencyThreshold = 0.4;
 
-        public Simulator()
+        public Simulator(string maindatapath, string subdatapath)
         {
             r = new BetterRandom();
-            mainData = new DataReader("../../data/actualtest.csv");
-            subSystems = new DataReader("../../data/subsystems.csv");
+            mainData = new DataReader(maindatapath);
+            subSystems = new DataReader(subdatapath);
             daysTaken = 0;
+            if (mainData.fileloadedsuccessfully && subSystems.fileloadedsuccessfully)
+            {
+                didloadsuccessfully = true;
+            }
         }
 
         // Build the data 
@@ -52,14 +58,16 @@ namespace PDSimulation.src
                 double totalmessagetime = Convert.ToDouble(mainData.data["totalmessageresponsetime"]);
                 double centralization = DataReader.getProbabilityFromScale(mainData.data["centralization"], 1, 5);
                 double assumptions = DataReader.getProbabilityFromScale(mainData.data["assumptions"], 1, 5);
-                double messageresponserate = DataReader.getProbabilityFromScale(mainData.data["messageresponserate"], 1, 5) + 0.5;
+                // double messageresponserate = DataReader.getProbabilityFromScale(mainData.data["messageresponserate"], 1, 5) + 0.5;
+                double messageresponserate = Convert.ToDouble(mainData.data["messageresponserate"]);
                 double assumptionaccuracy = DataReader.getProbabilityFromScale(mainData.data["assumptionaccuracy"], 1, 5);
                 double assumptioneffect = DataReader.getProbabilityFromScale(mainData.data["assumptioneffect"], 1, 5);
                 double tasktime = Convert.ToDouble(mainData.data["tasktime"]);
+                double experience = DataReader.getProbabilityFromScale(mainData.data["experience"], 1, 5);
 
                 sub.setTime(tasktime);
 
-                Actor actor = new Actor(sub, totalmessagetime, centralization, assumptions, messageresponserate, assumptionaccuracy, assumptioneffect);
+                Actor actor = new Actor(sub, totalmessagetime, centralization, assumptions, messageresponserate, assumptionaccuracy, assumptioneffect, experience);
                 actorsList.Add(actor);
                 actor.resetDay();
 
@@ -78,13 +86,6 @@ namespace PDSimulation.src
                     //}
                 }
             }
-
-            //Console.WriteLine("Sub x depend");
-            //foreach (KeyValuePair<SubSystem, double> kvp in subSystemList["sub x"].subSystemDependencies)
-            //{
-            //    Console.WriteLine(kvp.Value);
-            //}    
-           // Console.WriteLine(subSystemList["sub x"].subSystemDependencies.Count);
         }
 
         public void simulate()
@@ -95,12 +96,7 @@ namespace PDSimulation.src
             {
                 daysTaken++;
 
-                if (daysTaken > 362)
-                {
-                    //Console.WriteLine(":(");
-                }
-
-                if (daysTaken > 365)
+                if (daysTaken > 1000)
                 {
                     
                     finished = true;
@@ -130,7 +126,7 @@ namespace PDSimulation.src
 
                         if (actor.subSystem.inbox.Count > 10)
                         {
-                            throw new Exception("HELP");
+                            //throw new Exception("HELP");
                         }
                     } catch (Exception e)
                     {
@@ -141,11 +137,11 @@ namespace PDSimulation.src
                     foreach (Message message in actor.subSystem.inbox)
                     {
                         // If enough time left, respond to message and subtract time
-                        if (messageTimeLeft >= (message.messageResponseTime / actor.messageResponseRate) && !message.answered)
+                        if (messageTimeLeft >= (actor.totalMessageResponseTime / actor.messageResponseRate) && !message.answered)
                         {
                             message.answered = true;
-                            messageTimeLeft -= (message.messageResponseTime / actor.messageResponseRate);
-                            actor.workingHoursLeftInDay -= (message.messageResponseTime / actor.messageResponseRate);
+                            messageTimeLeft -= (actor.totalMessageResponseTime / actor.messageResponseRate);
+                            actor.workingHoursLeftInDay -= (actor.totalMessageResponseTime / actor.messageResponseRate);
                         }
                     }
 
@@ -200,12 +196,17 @@ namespace PDSimulation.src
                                 subsystem.Value.hoursTillCompletion -= actor.workingHoursLeftInDay;
                                 actor.timeWorkedThisDay = actor.workingHoursLeftInDay;
                                 actor.workingHoursLeftInDay = 0;
+                                if (actor.subSystem.hoursTillCompletion < 0)
+                                {
+                                    actor.subSystem.hoursTillCompletion = 0;
+                                }
                             }
                         }
                         else
                         {
                             if (actor.subSystem.hoursTillCompletion < 0)
                             {
+                                actor.subSystem.hoursTillCompletion = 0;
                                 continue;
                             }
                             actor.subSystem.hoursTillCompletion -= actor.workingHoursLeftInDay;
@@ -241,11 +242,14 @@ namespace PDSimulation.src
                      * 
                      * If an assumption occurs, add one day of work
                      */
-                    double pRework = actor.assumptionChance * actor.assumptionEffect;
+                    double pRework = (1 - actor.experience) * actor.assumptionEffect;
                     if (doesEventOccur(pRework) && !actor.subSystem.isBlocked)
                     {
                         actor.subSystem.hoursTillCompletion += actor.timeWorkedThisDay;
-                        //Console.WriteLine("rework was done");
+                      /*  foreach(KeyValuePair<SubSystem,double> kvp in actor.subSystem.subSystemDependencies)
+                        {
+                            kvp.Key.hoursTillCompletion += kvp.Key.getDependencyOnSubSystem(actor.subSystem) * actor.timeWorkedThisDay * 0.1;
+                        }*/
                     }
                 }
 
@@ -281,7 +285,7 @@ namespace PDSimulation.src
                     {
                         foreach (Message m in actor.outbox)
                         {
-                            if (m.daysSinceSent > 2)
+                            if (m.daysSinceSent > 0)
                             {
                                 // Check if the actor makes an assumption
                                 if (doesEventOccur(actor.assumptionChance))
